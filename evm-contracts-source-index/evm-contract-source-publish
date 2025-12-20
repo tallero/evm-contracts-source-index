@@ -22,13 +22,12 @@
 #    You should have received a copy of the GNU Affero General Public License
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-_bin="$( \
+_bin="$(
   dirname \
-    "$( \
-      command \
-        -v \
-	  "env")")"
-_lib="$( \
+    "$(command \
+         -v \
+	 "env")")"
+_lib="$(
   realpath \
     "${_bin}/../lib")"
 _crash_bash="${_lib}/libcrash-bash/crash-bash"
@@ -69,7 +68,7 @@ _requirements() {
   libevm-requirements
   _check_cmd \
     'tar'
-  _zlib="$( \
+  _zlib="$(
     find \
       "$(_get_lib)/libz."* \
       -type \
@@ -143,6 +142,8 @@ _contract_sign() {
       "${_gnupg_home}"
     --local-user
       "${_key_fingerprint}"
+    --pinentry-mode
+      "loopback"
     --sign
     --output
       "${_dir}/${_contract_name}.tar.xz.gpg"
@@ -249,7 +250,7 @@ _contract_upload() {
   )
   _msg_info \
     "${_msg[*]}"
-  _source_uri="$( \
+  _source_uri="$(
     evmfs \
       "${_evmfs_uri_opts[@]}" \
       publish \
@@ -352,7 +353,7 @@ _contract_prepare() {
       1
   fi
   _work_dir_setup
-  _contract_filename="$( \
+  _contract_filename="$(
     basename \
       "${_contract_source}")"
   _contract_name="${_contract_filename%*.sol}"
@@ -379,7 +380,7 @@ _source_locked_check() {
     "${_si_abi}" \
     "${_si_bytecode}" \
     "${_si_compiler_output}"
-  _locked="$( \
+  _locked="$(
     evm-contract-call \
       "${_source_locked_call_opts[@]}" \
       "${_si_address}" \
@@ -418,7 +419,7 @@ _source_locked_check() {
 # _contract_address_check() {
 #   local \
 #     _
-#   _tx_deployment="$( \
+#   _tx_deployment="$(
 #     _lower \
 #       "${_tx_deployment}")"
 #   _bytes32_check \
@@ -488,10 +489,10 @@ _evm_contract_source_publish() {
       "${_msg[*]}" \
       1
   fi
-  _contract_address="$( \
+  _contract_address="$(
     _lower \
       "${_contract_address}")"
-  _tx_deployment="$( \
+  _tx_deployment="$(
     _lower \
       "${_tx_deployment}")"
   _address_sanity_check \
@@ -618,7 +619,7 @@ _evm_contract_source_publish() {
 _work_dir_setup() {
   local \
     _msg=()
-  _work_dir="$( \
+  _work_dir="$(
     mktemp \
       -u \
       -d \
@@ -682,7 +683,7 @@ _key_latest_select() {
         "${_keyserver_receive_dir}" \
 	"${_find_opts[@]}" 2>/dev/null || \
       true)
-  _keys_sorted=( $( \
+  _keys_sorted=( $(
     printf \
       "%s\n" \
       "${_keys[@]}" | \
@@ -705,12 +706,12 @@ _key_latest_select() {
   fi
   _msg_info \
     "Selecting key '${_keys_sorted[-1]}'."
-  _fingerprint="$( \
+  _fingerprint="$(
     gpg-key-info \
       -o \
         "fingerprint" \
       "${_keys_sorted[-1]}")"
-  _email="$( \
+  _email="$(
     gpg-key-info \
       -o \
         "email" \
@@ -760,6 +761,12 @@ _set_overrides() {
     "user" \
     "level" \
     "n"
+  _api_key_auto_detect \
+    "${target_network}"
+  _wallet_overrides_set \
+    "evm-wallet" \
+    "default" \
+    "y"
   _deployments_dir_auto_detect \
     "evm-contracts-source-index" \
     "${user_level}"
@@ -767,12 +774,6 @@ _set_overrides() {
     "SourceIndex" \
     "${deployments_dir}" \
     "${user_level}"
-  _api_key_auto_detect \
-    "${target_network}"
-  _wallet_overrides_set \
-    "evm-wallet" \
-    "default" \
-    "y"
   _set_override \
     "target" \
     "publisher" \
@@ -800,10 +801,6 @@ _set_overrides() {
     "gnupg" \
     "home" \
     "${HOME}/.config/evm-gnupg"
-  _set_override \
-    "gnupg" \
-    "home" \
-    "${HOME}/.config/evm-gnupg"
   _pgp_fingerprint_auto_detect
   _pgp_email_auto_detect
   _set_override \
@@ -822,7 +819,7 @@ _usage() {
     _usage_text
   _si="SourceIndex"
   _si_deployment="${deployments_dir}/${_si}"
-  _networks=( $( \
+  _networks=( $(
     evm-contract-deployment-networks \
       -A \
       "${_si_deployment}")
@@ -901,6 +898,8 @@ $(_display_networks \
   application options:
      -H <gnupg_home>           GNUPG home directory.
                                Default: ${gnupg_home}
+     -W <cache_dir>            Work directory.
+                               Default: ${cache_dir}
 
      -c                        Colors.
      -h                        This message.
@@ -920,6 +919,7 @@ _show_config() {
   _msg_info "            Target namespace:   ${target_publisher}"
   _msg_info "               Signature key:   ${pgp_fingerprint}"
   _msg_info "             Signature email:   ${pgp_email}"
+  _msg_info "            Target options:"
   _msg_info "           Target source URI:   ${source_uri}"
   _msg_info "              Source publish:   ${source_publish}"
   _msg_info "     Target compiler version:   ${compiler_version}"
@@ -946,8 +946,9 @@ _globals
 _global_variables
 _requirements
 _libevm_global_variables
+_libevm_app_global_variables
 # shellcheck disable=SC2034
-getopts_opts="$( \
+getopts_opts="$(
   printf \
     "%s" \
     "P:U:S:H:K:E:" \
@@ -964,25 +965,25 @@ while \
   _libevm_app_getopts_case
   case \
     "${arg}" in
-    A) \
+    A)
       override_si_address="${OPTARG}" ;;
-    V) \
+    V)
       override_si_version="${OPTARG}" ;;
-    n) \
+    n)
       override_target_network="${OPTARG}" ;;
-    P) \
+    P)
       override_target_publisher="${OPTARG}" ;;
-    U) \
+    U)
       override_source_uri="${OPTARG}" ;;
-    S) \
+    S)
       override_source_publish="${OPTARG}" ;;
-    H) \
+    H)
       override_gnupg_home="${OPTARG}" ;;
-    K) \
+    K)
       override_pgp_fingerprint="${OPTARG}" ;;
-    E) \
+    E)
       override_pgp_email="${OPTARG}" ;;
-    W) \
+    W)
       override_cache_dir="${OPTARG}" ;;
     c) \
       override_color="y" ;;
