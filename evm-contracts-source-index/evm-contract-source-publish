@@ -148,7 +148,7 @@ _contract_sign() {
     --local-user
       "${_key_fingerprint}"
     --pinentry-mode
-      "ask"
+      "loopback"
     # --pinentry-mode
     #   "tty"
     --sign
